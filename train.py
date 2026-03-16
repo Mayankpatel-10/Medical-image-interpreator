@@ -1,29 +1,29 @@
-# Required libraries import kar rahe hain
-import os  # File system ke liye
-import numpy as np  # Sankhyatmak operations ke liye
-import matplotlib.pyplot as plt  # Graphs aur visualization ke liye
-import seaborn as sns  # Advanced graphs ke liye
-import cv2  # Image processing ke liye (OpenCV)
-from PIL import Image  # Image handling ke liye
-from tqdm import tqdm  # Progress bar ke liye
+# Importing required libraries
+import os  # For file system operations
+import numpy as np  # For numerical operations
+import matplotlib.pyplot as plt  # For graphs and visualization
+import seaborn as sns  # For advanced graphs
+import cv2  # For image processing (OpenCV)
+from PIL import Image  # For image handling
+from tqdm import tqdm  # For progress bars
 import torch  # Deep learning framework PyTorch
 import torch.nn as nn  # Neural network modules
-import torch.optim as optim  # Optimizers ke liye
-from torch.utils.data import DataLoader, Dataset  # Data loading ke liye
-from torchvision import transforms, models  # Computer vision ke liye
-from sklearn.metrics import classification_report, confusion_matrix  # Metrics ke liye
+import torch.optim as optim  # For optimizers
+from torch.utils.data import DataLoader, Dataset  # For data loading
+from torchvision import transforms, models  # For computer vision
+from sklearn.metrics import classification_report, confusion_matrix  # For metrics
 import warnings
-warnings.filterwarnings('ignore')  # Warnings ko ignore karne ke liye
+warnings.filterwarnings('ignore')  # To ignore warnings
 
-# Better looks ke liye style set karein
+# Set style for better looks
 plt.style.use('seaborn-v0_8')
-sns.set_palette("husl")  # Color palette set karein
+sns.set_palette("husl")  # Set color palette
 
-# GPU Configuration (silent mode) - CUDA available hai to GPU use karenge
+# GPU Configuration (silent mode) - Use GPU if CUDA is available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class MedicalImageDataset(Dataset):
-    """Medical images ke liye custom dataset class"""
+    """Custom dataset class for medical images"""
     def __init__(self, data_dir, transform=None):
         self.data_dir = data_dir
         self.transform = transform
@@ -32,12 +32,12 @@ class MedicalImageDataset(Dataset):
         self.images = []
         self.labels = []
         
-        # Image paths ko load karein
+        # Load image paths
         for class_name in self.classes:
             class_dir = os.path.join(data_dir, class_name)
             if os.path.isdir(class_dir):
                 for img_name in os.listdir(class_dir):
-                    if img_name.lower().endswith(('.png', '.jpg', '.jpeg')):  # Sirf image files lein
+                    if img_name.lower().endswith(('.png', '.jpg', '.jpeg')):  # Only take image files
                         self.images.append(os.path.join(class_dir, img_name))
                         self.labels.append(self.class_to_idx[class_name])
     
@@ -48,8 +48,8 @@ class MedicalImageDataset(Dataset):
         img_path = self.images[idx]
         label = self.labels[idx]
         
-        # Image ko load karein
-        image = Image.open(img_path).convert('RGB')  # RGB format mein convert karein
+        # Load image
+        image = Image.open(img_path).convert('RGB')  # Convert to RGB format
         
         if self.transform:
             image = self.transform(image)
@@ -57,60 +57,60 @@ class MedicalImageDataset(Dataset):
         return image, label
 
 class GPUMedicalClassifier:
-    """GPU ke liye optimized medical image classifier"""
+    """GPU optimized medical image classifier"""
     def __init__(self, image_size=224, batch_size=32):
         self.image_size = image_size
         self.batch_size = batch_size
         self.device = device
         
-        # GPU memory ke hisab se batch size adjust karein
+        # Adjust batch size based on GPU memory
         if torch.cuda.is_available():
             gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1e9  # GPU memory in GB
             if gpu_memory >= 8:
-                self.batch_size = min(64, batch_size * 2)  # High memory mein larger batch
+                self.batch_size = min(64, batch_size * 2)  # Larger batch in high memory
             elif gpu_memory >= 4:
                 self.batch_size = batch_size  # Medium memory
             else:
-                self.batch_size = min(16, batch_size)  # Low memory mein smaller batch
+                self.batch_size = min(16, batch_size)  # Smaller batch in low memory
         else:
-            self.batch_size = min(16, batch_size)  # CPU ke liye small batch
+            self.batch_size = min(16, batch_size)  # Small batch for CPU
         
-        # Data transforms - Training ke liye data augmentation
+        # Data transforms - Data augmentation for training
         self.train_transform = transforms.Compose([
-            transforms.Resize((image_size, image_size)),  # Image ko resize karein
+            transforms.Resize((image_size, image_size)),  # Resize image
             transforms.RandomRotation(20),  # Random rotation
             transforms.RandomHorizontalFlip(),  # Random flip
             transforms.RandomAffine(degrees=0, translate=(0.2, 0.2), shear=0.2, scale=(0.8, 1.2)),  # Random transformations
-            transforms.ToTensor(),  # Tensor mein convert karein
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize karein
-        ])
-        
-        # Test transforms - Validation/testing ke liye (no augmentation)
-        self.test_transform = transforms.Compose([
-            transforms.Resize((image_size, image_size)),  # Sirf resize
-            transforms.ToTensor(),  # Tensor mein convert
+            transforms.ToTensor(),  # Convert to tensor
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
         ])
         
-        # Models aur class names ko store karein
+        # Test transforms - For validation/testing (no augmentation)
+        self.test_transform = transforms.Compose([
+            transforms.Resize((image_size, image_size)),  # Only resize
+            transforms.ToTensor(),  # Convert to tensor
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
+        ])
+        
+        # Store models and class names
         self.models = {}
         self.class_names = {}
     
     def create_model(self, num_classes):
-        """Transfer learning ke saath model banana"""
-        # EfficientNet-B0 use karein (pretrained)
+        """Create model with transfer learning"""
+        # Use EfficientNet-B0 (pretrained)
         model = models.efficientnet_b0(pretrained=True)
         
-        # Final layer ko modify karein
-        num_ftrs = model.classifier[1].in_features  # Last layer ke features
-        model.classifier[1] = nn.Linear(num_ftrs, num_classes)  # Apne classes ke liye
+        # Modify final layer
+        num_ftrs = model.classifier[1].in_features  # Features from last layer
+        model.classifier[1] = nn.Linear(num_ftrs, num_classes)  # For our classes
         
-        # GPU par bhejein
+        # Send to GPU
         model = model.to(self.device)
         
-        # Mixed precision training enable karein agar available hai
+        # Enable mixed precision training if available
         if torch.cuda.is_available():
-            scaler = torch.cuda.amp.GradScaler()  # GPU memory bachane ke liye
+            scaler = torch.cuda.amp.GradScaler()  # To save GPU memory
         else:
             scaler = None
         
