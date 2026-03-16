@@ -1,6 +1,6 @@
 # 🏥 Medical Image Classification System
 
-Ek advanced deep learning system jo medical images se brain tumor aur pneumonia detect karta hai using EfficientNet-B0 architecture.
+An advanced deep learning system that detects brain tumors and pneumonia from medical images using EfficientNet-B0 architecture.
 
 ## 📋 Table of Contents
 
@@ -58,7 +58,7 @@ tqdm>=4.62.0
 
 ## 🛠️ Installation
 
-### 1. Repository Clone Karein
+### 1. Clone Repository
 ```bash
 git clone <repository-url>
 cd EL-Project
@@ -66,24 +66,24 @@ cd EL-Project
 
 ### 2. Python Environment Setup
 ```bash
-# Virtual environment banayein
+# Create virtual environment
 python -m venv medical_env
 
-# Activate karein
+# Activate
 # Windows:
 medical_env\Scripts\activate
 # Linux/Mac:
 source medical_env/bin/activate
 
-# Dependencies install karein
+# Install dependencies
 pip install -r requirements.txt
 ```
 
 ### 3. GPU Setup (Optional)
 ```bash
-# NVIDIA GPU drivers install karein
-# CUDA aur cuDNN setup karein
-# PyTorch GPU version check karein
+# Install NVIDIA GPU drivers
+# Setup CUDA and cuDNN
+# Check PyTorch GPU version
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 
@@ -115,7 +115,7 @@ Data/
 
 ### 1. **Training Models**
 ```bash
-# Brain tumor aur pneumonia dono models train karein
+# Train both brain tumor and pneumonia models
 python train.py
 
 # Output:
@@ -128,7 +128,7 @@ python train.py
 # Interactive prediction tool
 python predict.py
 
-# File browser se image select karein
+# Select image using file browser
 # Automatic disease detection
 # Grad-CAM visualization
 # Detailed analysis report
@@ -136,7 +136,7 @@ python predict.py
 
 ### 3. **Backend API (Optional)**
 ```bash
-# Flask server start karein
+# Start Flask server
 cd backend
 python app.py
 
@@ -310,7 +310,7 @@ else:
 
 ### **Mixed Precision Training**
 ```python
-# GPU memory bachane ke liye
+# To save GPU memory
 scaler = torch.cuda.amp.GradScaler()
 
 with torch.cuda.amp.autocast():
@@ -328,35 +328,35 @@ scaler.update()
 
 1. **CUDA Out of Memory**
    ```python
-   # Batch size kam karein
+   # Reduce batch size
    classifier = GPUMedicalClassifier(batch_size=16)
    ```
 
 2. **Model Not Found**
    ```bash
-   # Pehle train karein
+   # Train first
    python train.py
    ```
 
 3. **Dataset Path Error**
    ```python
-   # Data folder check karein
-   # Correct structure follow karein
+   # Check Data folder
+   # Follow correct structure
    ```
 
 4. **Import Errors**
    ```bash
-   # Dependencies install karein
+   # Install dependencies
    pip install -r requirements.txt
    ```
 
 ## 🤝 Contributing
 
-1. Fork karein repository
-2. Feature branch banayein (`git checkout -b feature/AmazingFeature`)
-3. Commit karein changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push karein branch (`git push origin feature/AmazingFeature`)
-5. Open karein Pull Request
+1. Fork repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
 
 ## 📝 License
 
@@ -364,11 +364,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍⚕️ Medical Disclaimer
 
-⚠️ **Important**: Ye system educational aur research purposes ke liye hai. Medical diagnosis ke liye qualified healthcare professional se consult karein.
+⚠️ **Important**: This system is for educational and research purposes. Consult qualified healthcare professionals for medical diagnosis.
 
-- Ye tool medical decisions ke liye nahi hai
-- Always doctor se verified diagnosis lein
-- Emergency situations mein immediate medical help lein
+- This tool is not for medical decisions
+- Always get verified diagnosis from a doctor
+- Get immediate medical help in emergency situations
 
 ## 📞 Contact
 
