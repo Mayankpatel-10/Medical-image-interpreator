@@ -1,39 +1,39 @@
-# Required libraries import kar rahe hain
-import os  # File system ke liye
-import numpy as np  # Sankhyatmak operations ke liye
-import matplotlib.pyplot as plt  # Graphs aur visualization ke liye
-import cv2  # Image processing ke liye (OpenCV)
-from PIL import Image  # Image handling ke liye
+# Importing required libraries
+import os  # For file system operations
+import numpy as np  # For numerical operations
+import matplotlib.pyplot as plt  # For graphs and visualization
+import cv2  # For image processing (OpenCV)
+from PIL import Image  # For image handling
 import torch  # Deep learning framework PyTorch
 import torch.nn as nn  # Neural network modules
-from torchvision import transforms, models  # Computer vision ke liye
+from torchvision import transforms, models  # For computer vision
 import torch.nn.functional as F  # Neural network functions
-import tkinter as tk  # File dialog box ke liye
-from tkinter import filedialog  # File chunne ke liye
+import tkinter as tk  # For file dialog boxes
+from tkinter import filedialog  # For file selection
 import warnings
-warnings.filterwarnings('ignore')  # Warnings ko ignore karne ke liye
+warnings.filterwarnings('ignore')  # To ignore warnings
 
-# GPU Configuration - CUDA available hai to GPU use karenge warna CPU
+# GPU Configuration - Use GPU if CUDA is available, otherwise use CPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class EasyMedicalPredictor:
-    """Medical image prediction ke liye main class"""
+    """Main class for medical image prediction"""
     def __init__(self, image_size=224):
         self.image_size = image_size
         self.device = device
         
-        # Image preprocessing - Image ko model ke liye taiyar karna
+        # Image preprocessing - Prepare image for the model
         self.transform = transforms.Compose([
-            transforms.Resize((image_size, image_size)),  # Image ko 224x224 size mein resize karein
-            transforms.ToTensor(),  # Image ko tensor mein badlein
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize karein
+            transforms.Resize((image_size, image_size)),  # Resize image to 224x224
+            transforms.ToTensor(),  # Convert image to tensor
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
         ])
         
-        # Disease ki categories
+        # Disease categories
         self.brain_tumor_classes = ['glioma', 'meningioma', 'notumor', 'pituitary']  # Brain tumor types
         self.pneumonia_classes = ['NORMAL', 'PNEUMONIA']  # Pneumonia categories
         
-        # Models - dono bimariyon ke liye alag-alag models
+        # Models - Separate models for both diseases
         self.brain_tumor_model = None  # Brain tumor detection model
         self.pneumonia_model = None  # Pneumonia detection model
         
@@ -46,20 +46,20 @@ class EasyMedicalPredictor:
         print("="*40)
     
     def load_models(self):
-        """Trained models ko load karna"""
-        models_loaded = 0  # Kitne models hue
+        """Load trained models"""
+        models_loaded = 0  # Count of loaded models
         
-        # Brain tumor model ko load karein
+        # Load brain tumor model
         if os.path.exists('best_brain_tumor_model.pth'):
             try:
-                # EfficientNet-B0 model banayein aur use apni zarurat ke hisab se modify karein
+                # Create EfficientNet-B0 model and modify as needed
                 self.brain_tumor_model = models.efficientnet_b0(pretrained=True)
-                num_ftrs = self.brain_tumor_model.classifier[1].in_features  # Akhri layer ke features nikalein
-                self.brain_tumor_model.classifier[1] = nn.Linear(num_ftrs, 4)  # 4 classes ke liye
-                # Trained weights ko load karein
+                num_ftrs = self.brain_tumor_model.classifier[1].in_features  # Get features from last layer
+                self.brain_tumor_model.classifier[1] = nn.Linear(num_ftrs, 4)  # For 4 classes
+                # Load trained weights
                 self.brain_tumor_model.load_state_dict(torch.load('best_brain_tumor_model.pth', map_location=self.device))
-                self.brain_tumor_model = self.brain_tumor_model.to(self.device)  # GPU/CPU par bhejein
-                self.brain_tumor_model.eval()  # Evaluation mode mein set karein
+                self.brain_tumor_model = self.brain_tumor_model.to(self.device)  # Send to GPU/CPU
+                self.brain_tumor_model.eval()  # Set to evaluation mode
                 print("Brain tumor model loaded")
                 models_loaded += 1
             except Exception as e:
@@ -67,7 +67,7 @@ class EasyMedicalPredictor:
         else:
             print("Brain tumor model not found")
         
-        # Pneumonia model ko load karein
+        # Load pneumonia model
         if os.path.exists('best_pnemonia_model.pth'):
             try:
                 self.pneumonia_model = models.efficientnet_b0(pretrained=True)
@@ -86,17 +86,17 @@ class EasyMedicalPredictor:
         return models_loaded
     
     def select_image_file(self):
-        """File dialog kholkar image select karna"""
-        print("\nFile browser khola ja raha hai...")
+        """Open file dialog to select image"""
+        print("\nOpening file browser...")
         
-        # Root window banayein (chhupa hua)
+        # Create root window (hidden)
         root = tk.Tk()
-        root.withdraw()  # Window ko chipayein
-        root.attributes('-topmost', True)  # Sabse upar rakhein
+        root.withdraw()  # Hide window
+        root.attributes('-topmost', True)  # Keep on top
         
         # File dialog box
         file_path = filedialog.askopenfilename(
-            title="Medical image chunein",
+            title="Select medical image",
             filetypes=[
                 ("Image files", "*.jpg *.jpeg *.png *.bmp *.tiff"),
                 ("All files", "*.*")
@@ -113,36 +113,36 @@ class EasyMedicalPredictor:
             return None
     
     def preprocess_image(self, image_path):
-        """Prediction ke liye image ko preprocess karna"""
+        """Preprocess image for prediction"""
         try:
-            image = Image.open(image_path).convert('RGB')  # Image ko RGB mein badlein
-            original_image = image.copy()  # Original image ki copy rakhein
-            image_tensor = self.transform(image).unsqueeze(0).to(self.device)  # Transform aur tensor mein badlein
+            image = Image.open(image_path).convert('RGB')  # Convert image to RGB
+            original_image = image.copy()  # Keep copy of original image
+            image_tensor = self.transform(image).unsqueeze(0).to(self.device)  # Transform and convert to tensor
             return image_tensor, original_image
         except Exception as e:
-            print(f"Image preprocessing mein error: {e}")
+            print(f"Error in image preprocessing: {e}")
             return None, None
     
     def predict_brain_tumor(self, image_tensor):
-        """Brain tumor ka prediction karna"""
+        """Predict brain tumor"""
         if self.brain_tumor_model is None:
-            return None, None, None  # Model available nahi hai
+            return None, None, None  # Model not available
         
-        with torch.no_grad():  # Gradient calculation band karein (bachat ke liye)
-            outputs = self.brain_tumor_model(image_tensor)  # Model se prediction lein
-            probabilities = F.softmax(outputs, dim=1)  # Probabilities nikalein
-            confidence, predicted = torch.max(probabilities, 1)  # Sabse zyada confidence wala class nikalein
+        with torch.no_grad():  # Disable gradient calculation (for efficiency)
+            outputs = self.brain_tumor_model(image_tensor)  # Get prediction from model
+            probabilities = F.softmax(outputs, dim=1)  # Get probabilities
+            confidence, predicted = torch.max(probabilities, 1)  # Get class with highest confidence
             
-            predicted_class = self.brain_tumor_classes[predicted.item()]  # Class ka naam nikalein
+            predicted_class = self.brain_tumor_classes[predicted.item()]  # Get class name
             confidence_score = confidence.item()  # Confidence score
-            all_probs = probabilities.cpu().numpy().flatten()  # Sabhi classes ki probabilities
+            all_probs = probabilities.cpu().numpy().flatten()  # Probabilities for all classes
             
             return predicted_class, confidence_score, all_probs
     
     def predict_pneumonia(self, image_tensor):
-        """Pneumonia ka prediction karna"""
+        """Predict pneumonia"""
         if self.pneumonia_model is None:
-            return None, None, None  # Model available nahi hai
+            return None, None, None  # Model not available
         
         with torch.no_grad():
             outputs = self.pneumonia_model(image_tensor)
@@ -156,9 +156,9 @@ class EasyMedicalPredictor:
             return predicted_class, confidence_score, all_probs
     
     def create_grad_cam_fixed(self, model, image_tensor, target_layer_name='features'):
-        """Grad-CAM visualization banana - ye batata hai ki model ne kis hisse par dhyan diya"""
+        """Create Grad-CAM visualization - shows which part the model focused on"""
         try:
-            # Gradients aur activations ko store karne ke liye
+            # To store gradients and activations
             gradients = {}
             activations = {}
             
@@ -189,33 +189,33 @@ class EasyMedicalPredictor:
             forward_handle = target_layer.register_forward_hook(forward_hook)
             backward_handle = target_layer.register_backward_hook(backward_hook)
             
-            # Forward pass - Image ko model se guzarein
+            # Forward pass - Pass image through model
             model.eval()
             output = model(image_tensor)
-            pred_idx = output.argmax(dim=1).item()  # Sabse zyada confidence wala class
+            pred_idx = output.argmax(dim=1).item()  # Class with highest confidence
             
-            # Backward pass - Gradients calculate karein
-            model.zero_grad()  # Purane gradients clear karein
-            class_loss = output[0, pred_idx]  # Loss calculate karein
+            # Backward pass - Calculate gradients
+            model.zero_grad()  # Clear old gradients
+            class_loss = output[0, pred_idx]  # Calculate loss
             class_loss.backward(retain_graph=True)  # Backpropagation
             
             # Remove hooks
             forward_handle.remove()
             backward_handle.remove()
             
-            # Gradients aur activations ko milkar CAM banayein
+            # Create CAM by combining gradients and activations
             if target_layer in gradients and target_layer in activations:
                 grads = gradients[target_layer]
                 acts = activations[target_layer]
                 
-                # Gradients ka global average pooling
+                # Global average pooling of gradients
                 weights = torch.mean(grads, dim=(2, 3), keepdim=True)
                 
-                # Activations ka weighted combination
+                # Weighted combination of activations
                 cam = torch.sum(weights * acts, dim=1)
-                cam = torch.relu(cam)  # Negative values ko 0 karein
+                cam = torch.relu(cam)  # Set negative values to 0
                 
-                # Normalize karein (0 se 1 ke beech)
+                # Normalize (between 0 and 1)
                 if cam.max() > cam.min():
                     cam = (cam - cam.min()) / (cam.max() - cam.min())
                 
@@ -228,20 +228,20 @@ class EasyMedicalPredictor:
             return None
     
     def create_simple_heatmap(self, image_tensor, model):
-        """Simple attention heatmap - agar Grad-CAM fail ho jaye to use karein"""
+        """Simple attention heatmap - use if Grad-CAM fails"""
         try:
             model.eval()
             with torch.no_grad():
-                output = model(image_tensor)  # Prediction lein
+                output = model(image_tensor)  # Get prediction
                 
-            # Prediction confidence par based simple attention map banayein
+            # Create simple attention map based on prediction confidence
             attention_map = torch.ones((1, self.image_size, self.image_size)) * output[0].max().item()
             attention_map = attention_map.squeeze().cpu().numpy()
             
-            # Kuch variation jodein taki ye heatmap jaisa dikhe
+            # Add some variation to make it look like heatmap
             x, y = np.meshgrid(np.linspace(0, 1, self.image_size), np.linspace(0, 1, self.image_size))
             
-            # Radial gradient banayein (beech se bahar ki aur)
+            # Create radial gradient (center to outside)
             dist = np.sqrt((x - 0.5)**2 + (y - 0.5)**2)
             attention_map = attention_map * np.exp(-dist * 3)  # Exponential decay
             
@@ -251,20 +251,20 @@ class EasyMedicalPredictor:
             return None
     
     def predict_and_visualize(self, image_path):
-        """Bimari ka prediction karein aur visualization banayein"""
-        print(f"\nVishleshan kiya ja raha hai: {os.path.basename(image_path)}")
+        """Predict disease and create visualization"""
+        print(f"\nAnalyzing: {os.path.basename(image_path)}")
         print("="*50)
         
-        # Preprocessing - Image ko taiyar karein
+        # Preprocessing - Prepare image
         image_tensor, original_image = self.preprocess_image(image_path)
         if image_tensor is None:
-            return  # Agar image load nahi hui to rukein
+            return  # Stop if image not loaded
         
-        # Prediction - Dono models se result lein
-        brain_result = self.predict_brain_tumor(image_tensor)  # Brain tumor ka result
-        pneumonia_result = self.predict_pneumonia(image_tensor)  # Pneumonia ka result
+        # Prediction - Get results from both models
+        brain_result = self.predict_brain_tumor(image_tensor)  # Brain tumor result
+        pneumonia_result = self.predict_pneumonia(image_tensor)  # Pneumonia result
         
-        # Results ko ikattha karein
+        # Collect results
         results = []
         
         if brain_result[0] is not None:
@@ -289,51 +289,51 @@ class EasyMedicalPredictor:
             print("No models available for prediction")
             return
         
-        # Sabse achha result (sabse zyada confidence wala)
+        # Best result (highest confidence)
         best_result = max(results, key=lambda x: x['confidence'])
         
-        # Visualization - 4 bhagon mein report banayein
+        # Visualization - Create report in 4 sections
         fig, axes = plt.subplots(2, 2, figsize=(12, 10))
         fig.suptitle('Medical Image Analysis Report', fontsize=16, fontweight='bold')
         
         # Original image
         axes[0, 0].imshow(original_image)
         axes[0, 0].set_title('Original Image', fontweight='bold')
-        axes[0, 0].axis('off')  # Axis chipayein
+        axes[0, 0].axis('off')  # Hide axis
         
         # Main prediction result
         result_text = f"Detection Result\n\n{best_result['disease']}\n\n{best_result['prediction']}\n\nConfidence: {best_result['confidence']:.1%}"
-        # Confidence ke hisab se rang chunein
+        # Choose color based on confidence
         color = "lightgreen" if best_result['confidence'] > 0.8 else "lightyellow" if best_result['confidence'] > 0.6 else "lightcoral"
         axes[0, 1].text(0.5, 0.5, result_text, ha='center', va='center', fontsize=14, fontweight='bold',
                        bbox=dict(boxstyle="round,pad=0.3", facecolor=color))
         axes[0, 1].set_title('Primary Detection', fontweight='bold')
         axes[0, 1].axis('off')
         
-        # Grad-CAM visualization - Model ne kis hisse par dhyan diya
+        # Grad-CAM visualization - Which part the model focused on
         if best_result['model'] is not None:
-            print("Grad-CAM visualization banaya ja raha hai...")
+            print("Creating Grad-CAM visualization...")
             
-            # Pehle fixed Grad-CAM ki koshish karein
+            # First try fixed Grad-CAM
             cam = self.create_grad_cam_fixed(best_result['model'], image_tensor)
             
             if cam is not None:
-                print("Grad-CAM successfully banaya gaya!")
-                # CAM ko image size mein resize karein
+                print("Grad-CAM created successfully!")
+                # Resize CAM to image size
                 cam_resized = cv2.resize(cam, (self.image_size, self.image_size))
-                # Heatmap banayein (Jet colormap ke saath)
+                # Create heatmap (with Jet colormap)
                 heatmap = cv2.applyColorMap(np.uint8(255 * cam_resized), cv2.COLORMAP_JET)
-                heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)  # BGR se RGB mein badlein
+                heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
                 
-                # Original image ko numpy mein badlein aur dono ko milayein
+                # Convert original image to numpy and combine both
                 orig_np = np.array(original_image.resize((self.image_size, self.image_size)))
                 superimposed = cv2.addWeighted(orig_np, 0.6, heatmap, 0.4, 0)  # 60% image + 40% heatmap
                 
                 axes[1, 0].imshow(superimposed)
                 axes[1, 0].set_title('Attention Map (Grad-CAM)', fontweight='bold')
             else:
-                print("Grad-CAM fail ho gaya, simple heatmap use kar rahe hain...")
-                # Fallback ke liye simple heatmap
+                print("Grad-CAM failed, using simple heatmap...")
+                # Simple heatmap as fallback
                 simple_heat = self.create_simple_heatmap(image_tensor, best_result['model'])
                 if simple_heat is not None:
                     heatmap = cv2.applyColorMap(np.uint8(255 * simple_heat), cv2.COLORMAP_JET)
@@ -352,7 +352,7 @@ class EasyMedicalPredictor:
             axes[1, 0].set_title('Attention Map', fontweight='bold')
         axes[1, 0].axis('off')
         
-        # Detailed analysis - Sabhi classes ki probabilities
+        # Detailed analysis - Probabilities for all classes
         details_text = "Detailed Predictions:\n\n"
         for result in results:
             details_text += f"{result['disease']}:\n"
@@ -375,74 +375,74 @@ class EasyMedicalPredictor:
         
         plt.tight_layout()
         
-        # Result save karein
+        # Save result
         output_path = f"prediction_{os.path.basename(image_path).split('.')[0]}.png"
         plt.savefig(output_path, dpi=150, bbox_inches='tight')
-        print(f"Result save ho gaya: {output_path}")
+        print(f"Result saved {output_path}")
         
-        plt.show()  # Report dikhaein
+        plt.show()  # Show report
         
-        # Saransh - Final diagnosis
+        # Summary - Final diagnosis
         print(f"\nFinal Diagnosis:")
         print(f"Primary: {best_result['disease']} - {best_result['prediction']}")
         print(f"Confidence: {best_result['confidence']:.1%}")
         
         if best_result['disease'] == 'Brain Tumor':
-            if best_result['prediction'] == 'notumor':
-                print("Result: Koi tumor nahi mila - Brain normal lag raha hai")
+            if best_result['prediction'] == 'no tumor':
+                print("Result: Normal")
             else:
-                print(f"Warning: {best_result['prediction'].upper()} tumor mila - Neurologist se salah lein")
+                print(f"Warning: {best_result['prediction'].upper()} tumor detected")
         else:
             if best_result['prediction'] == 'NORMAL':
-                print("Result: Phephde normal lag rahe hain - Koi pneumonia nahi")
+                print("Result: Normal")
             else:
-                print("Warning: Pneumonia mila - Doctor se salah lein")
+                print("Warning: PNEUMONIA Detected")
         
         print("="*50)
 
 def main():
-    """Aasan prediction tool file browser ke saath"""
-    print("Easy Medical Image Predictor")
+    """Easy prediction tool with file browser"""
+    print("Easy Medical Image interpreator")
     print("="*50)
     
-    # Initialize karein
+    # Initialize
     predictor = EasyMedicalPredictor()
     
-    # Models load karein
+    # Load models
     models_loaded = predictor.load_models()
     
     if models_loaded == 0:
-        print("\nKoi trained model nahi mila!")
-        print("Kripya chalayein: python train.py")
+        print("\nNo trained models found!")
+        print("Please run: python train.py")
         return
     
-    print(f"\n{models_loaded} model successfully load hue!")
+    print(f"\n{models_loaded} model successfully loaded!")
     
     while True:
         print("\n" + "="*50)
         print("Options:")
-        print("1. Image select karein aur predict karein")
+        print("1. Choose your image")
         print("2. Exit")
         print("="*50)
         
-        choice = input("Apna option chunein (1-2): ").strip()
+        choice = input("Select your option (1-2): ").strip()
         
         if choice == '2':
-            print("Alvida!")
+            print("Thank you for using the predictor!")
             break
         
         if choice != '1':
-            print("Amaanya option!")
+            print("Invalid option!")
             continue
         
-        # Image select karein
+        # Select image
         image_path = predictor.select_image_file()
         
         if not image_path:
             continue
         
         try:
-            # Predict karein
+            # Make prediction
             predictor.predict_and_visualize(image_path)
             
         except Exception as e:
