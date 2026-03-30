@@ -66,6 +66,3 @@ The system includes a Grad-CAM implementation that highlights the specific regio
 
 ## Medical Disclaimer
 Important: This system is intended for educational and research purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified healthcare provider for any questions regarding a medical condition.
-
-## License
-This project is licensed under the MIT License.
