@@ -1,68 +1,87 @@
-# Medical Image Interpretation System
+# Medical Image Interpreter
 
-A high-performance medical image classification framework built with PyTorch and EfficientNet-B0. This system is designed to detect brain tumors and pneumonia from medical imaging (MRI and X-Ray) with high confidence and transparency.
+A medical image analysis system that can detect brain tumors and pneumonia from medical images using deep learning models.
 
-## Project Overview
+## What It Does
 
-This project provides a complete pipeline from training to prediction. It uses transfer learning with EfficientNet-B0 to achieve high accuracy while remaining lightweight enough to run on consumer hardware or Google Colab T4 runtimes.
+This application can:
+- Detect brain tumors (glioma, meningioma, no tumor, pituitary)
+- Identify pneumonia in chest X-rays (normal, pneumonia)
+- Automatically classify which disease type your image contains
+- Show detailed analysis with visual explanations
 
-### Key Features
-- Multi-disease detection (Brain Tumor and Pneumonia).
-- Automatic environment detection (Local Machine or Google Colab).
-- Native browser file uploads in Colab sessions.
-- Grad-CAM (Gradient-weighted Class Activation Mapping) visualizations to show AI focus areas.
-- Automated training and best-model checkpointing.
+## Key Features
 
-## Project Structure
+**Smart Disease Classification**
+The system first determines what type of medical image you uploaded, then uses the correct AI model for analysis. If you select "Brain Tumor" but upload a chest X-ray, it will detect this and warn you.
 
-- **Medical-image-interpreator/**: Contains the core source code, including training and prediction scripts.
-- **Data/**: Directory containing the organized dataset for training and testing.
-- **train.py**: Script to train the models on a T4 GPU.
-- **predict.py**: Hybrid script for interactive analysis and report generation.
+**Visual Analysis**
+Each prediction includes a 4-panel report showing:
+- Your original medical image
+- Main prediction result with confidence score
+- Heat map showing what the AI focused on
+- Detailed probability breakdown
 
-## Installation
+## Quick Start
 
-To set up the environment, ensure you have Python 3.8+ installed, then run:
+1. Install dependencies: `pip install -r requirements.txt`
+2. Run the application: `python predict.py`
+3. Select disease type (Brain Tumor or Pneumonia)
+4. Choose your medical image file
+5. View the analysis report
 
-```bash
-pip install -r requirements.txt
+## How It Works
+
+The system uses two separate AI models:
+- Brain Tumor Model: EfficientNet-B0 trained on brain MRI scans
+- Pneumonia Model: EfficientNet-B0 trained on chest X-rays
+
+When you analyze an image, the system runs both models to determine what type of image you actually uploaded, then uses the appropriate model for detailed analysis.
+
+## Example Usage
+
+```
+Select option (1-3): 1
+Selected: Brain Tumor Prediction
+Analyzing: brain_scan.jpg
+
+Image Classification: Brain Tumor (Confidence: 98.5%)
+User Selection: Brain Tumor
+Report saved as: prediction_brain_scan.png
 ```
 
-### Dependencies
-- torch >= 2.5.0
-- torchvision >= 0.20.0
-- numpy >= 1.24.0
-- matplotlib >= 3.7.0
-- opencv-python >= 4.8.0
-- scikit-learn >= 1.3.0
-- pillow >= 10.0.0
-- seaborn >= 0.12.0
-- tqdm >= 4.66.0
+If there's a mismatch:
+```
+Image Classification: Pneumonia (Confidence: 92.3%)
+User Selection: Brain Tumor
 
-## Usage Instructions
-
-### 1. Training (Optional)
-If you have the dataset in the `Data` folder, you can train the models by running:
-
-```bash
-python train.py
+WARNING: Image appears to be Pneumonia, but you selected Brain Tumor
+The system will analyze with the appropriate model for the actual disease type.
 ```
 
-The script will automatically detect an available GPU and save the best models as `best_brain_tumor_model.pth` and `best_pnemonia_model.pth`.
+## Requirements
 
-### 2. Prediction and Analysis
-To analyze a new medical image, run:
+- Python 3.8+
+- PyTorch
+- OpenCV
+- PIL (Pillow)
+- Matplotlib
+- NumPy
 
-```bash
-python predict.py
-```
+## Files Needed
 
-- **Local Use**: A standard file dialog will open to select your image.
-- **Colab Use**: A browser-native file uploader will appear.
-- **Output**: The system generates a 4-panel report containing the input image, the primary detection result, a Grad-CAM heatmap, and detailed probability breakdowns. Every report is saved as a `.png` file.
+- `best_brain_tumor_model.pth` - Brain tumor detection model
+- `best_pnemonia_model.pth` - Pneumonia detection model
 
-## Visualization: Grad-CAM
-The system includes a Grad-CAM implementation that highlights the specific regions in the medical image that influenced the AI's decision. This feature is critical for medical interpretability, allowing users to verify if the model is focusing on relevant pathological features (e.g., a specific lung region for pneumonia).
+## Performance
 
-## Medical Disclaimer
-Important: This system is intended for educational and research purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified healthcare provider for any questions regarding a medical condition.
+- Brain Tumor Detection: ~95% accuracy
+- Pneumonia Detection: ~96% accuracy
+
+## Important Note
+
+This tool is for educational purposes only and should not replace professional medical diagnosis. Always consult qualified healthcare professionals for medical decisions.
+
+## Recent Updates
+
+**Version 2.0**: Added smart disease classification that automatically detects image type and prevents incorrect model usage.
