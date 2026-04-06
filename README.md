@@ -1,87 +1,59 @@
 # Medical Image Interpreter
 
-A medical image analysis system that can detect brain tumors and pneumonia from medical images using deep learning models.
+I built this medical image analysis system that can detect brain tumors and pneumonia from medical images using deep learning models. The system is smart enough to know what type of image you're uploading, even if you accidentally select the wrong disease type.
 
-## What It Does
+## What This System Does
 
-This application can:
-- Detect brain tumors (glioma, meningioma, no tumor, pituitary)
-- Identify pneumonia in chest X-rays (normal, pneumonia)
-- Automatically classify which disease type your image contains
-- Show detailed analysis with visual explanations
+The application handles two main medical conditions:
+- **Brain Tumor Detection**: Can identify glioma, meningioma, no tumor, and pituitary tumors from brain MRI scans
+- **Pneumonia Detection**: Can detect normal vs pneumonia conditions from chest X-ray images
+- **Smart Classification**: Automatically figures out whether your image is a brain scan or chest X-ray, then uses the right AI model
 
-## Key Features
+## The Cool Part - Smart Disease Detection
 
-**Smart Disease Classification**
-The system first determines what type of medical image you uploaded, then uses the correct AI model for analysis. If you select "Brain Tumor" but upload a chest X-ray, it will detect this and warn you.
+Here's what makes this system special: when you upload an image, it runs both AI models behind the scenes to determine what type of medical image you actually have. So if you accidentally select "Brain Tumor" but upload a chest X-ray, the system will catch this and let you know.
 
-**Visual Analysis**
-Each prediction includes a 4-panel report showing:
+## How to Use It
+
+Getting started is pretty straightforward:
+
+1. **Install the requirements**: Run `pip install -r requirements.txt`
+2. **Start the program**: Run `python predict.py`
+3. **Choose what you want to analyze**: Pick Brain Tumor or Pneumonia from the menu
+4. **Upload your medical image**: Select any JPG, PNG, or BMP file
+5. **Get your results**: View the detailed analysis report
+
+## What You'll See
+
+The system gives you a comprehensive 4-panel report:
 - Your original medical image
-- Main prediction result with confidence score
-- Heat map showing what the AI focused on
-- Detailed probability breakdown
+- The main prediction with confidence percentage
+- A heat map showing exactly what the AI was looking at
+- Detailed breakdown of all possible conditions
 
-## Quick Start
+## The Technology Behind It
 
-1. Install dependencies: `pip install -r requirements.txt`
-2. Run the application: `python predict.py`
-3. Select disease type (Brain Tumor or Pneumonia)
-4. Choose your medical image file
-5. View the analysis report
+I used two separate EfficientNet-B0 models:
+- One trained specifically on brain MRI scans for tumor detection
+- Another trained on chest X-rays for pneumonia detection
+- Both models achieve 95%+ accuracy on their respective tasks
 
-## How It Works
+## What You Need
 
-The system uses two separate AI models:
-- Brain Tumor Model: EfficientNet-B0 trained on brain MRI scans
-- Pneumonia Model: EfficientNet-B0 trained on chest X-rays
+Just two model files:
+- `best_brain_tumor_model.pth` - For brain tumor analysis
+- `best_pnemonia_model.pth` - For pneumonia analysis
 
-When you analyze an image, the system runs both models to determine what type of image you actually uploaded, then uses the appropriate model for detailed analysis.
+## Performance Numbers
 
-## Example Usage
+Based on my testing:
+- Brain Tumor Detection: About 95% accurate
+- Pneumonia Detection: About 96% accurate
 
-```
-Select option (1-3): 1
-Selected: Brain Tumor Prediction
-Analyzing: brain_scan.jpg
+## Important - Please Read
 
-Image Classification: Brain Tumor (Confidence: 98.5%)
-User Selection: Brain Tumor
-Report saved as: prediction_brain_scan.png
-```
+This tool was built for educational purposes to help understand how AI can assist in medical image analysis. It should never be used as the only basis for medical decisions. Always talk to qualified healthcare professionals for any medical concerns.
 
-If there's a mismatch:
-```
-Image Classification: Pneumonia (Confidence: 92.3%)
-User Selection: Brain Tumor
+## What's New
 
-WARNING: Image appears to be Pneumonia, but you selected Brain Tumor
-The system will analyze with the appropriate model for the actual disease type.
-```
-
-## Requirements
-
-- Python 3.8+
-- PyTorch
-- OpenCV
-- PIL (Pillow)
-- Matplotlib
-- NumPy
-
-## Files Needed
-
-- `best_brain_tumor_model.pth` - Brain tumor detection model
-- `best_pnemonia_model.pth` - Pneumonia detection model
-
-## Performance
-
-- Brain Tumor Detection: ~95% accuracy
-- Pneumonia Detection: ~96% accuracy
-
-## Important Note
-
-This tool is for educational purposes only and should not replace professional medical diagnosis. Always consult qualified healthcare professionals for medical decisions.
-
-## Recent Updates
-
-**Version 2.0**: Added smart disease classification that automatically detects image type and prevents incorrect model usage.
+**Version 2.0** - I just added the smart disease classification feature that prevents the system from giving wrong results when users accidentally select the wrong disease type. The system now automatically detects what type of medical image you have and uses the correct AI model.
